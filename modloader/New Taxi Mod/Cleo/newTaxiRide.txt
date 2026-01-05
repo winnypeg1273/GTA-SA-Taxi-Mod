@@ -101,7 +101,6 @@ wait 0
 jump @FINISH
 
 :ENTERING
-0512: show_permanent_text_box 'TAXI_2'
 Car.StorePos(0@, 27@, 28@, 29@)
 Car.DriveTo(0@, 27@, 28@, 29@)
 Car.ToggleTaxiLight(0@) = True
@@ -477,7 +476,7 @@ jf @FINISH
 Player.SetMinWantedLevel($PLAYER_CHAR, 1)
 
 :FINISH
-03E5: show_text_box 'TAXI_3'
+//03E5: show_text_box 'TAXI_3'
 Actor.RemoveReferences(1@)
 Car.RemoveReferences(0@)
 jump @START 
