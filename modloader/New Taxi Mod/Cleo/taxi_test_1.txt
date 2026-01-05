@@ -1,0 +1,320 @@
+{$CLEO .cs}
+
+0000: NOP
+
+:START
+wait 0
+if
+    Player.Defined($PLAYER_CHAR)
+jf @START    
+if
+    044B:   actor $PLAYER_ACTOR on_foot
+jf @START
+store_closest_entities $PLAYER_ACTOR 0@ 1@
+if 
+  0@ > 0 
+jf @START
+1@ = 0
+if
+    056E:   car 0@ defined
+jf @START
+08EC: 18@ = car 0@ class 
+if 
+   18@ == 6
+jf @START  
+Car.StorePos(0@, 27@, 28@, 29@)
+if 
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
+jf @START
+01E9: 18@ = car 0@ num_passengers 
+if 
+  18@ == 0 
+jf @START
+046C: 1@ = car 0@ driver
+if
+    not 1@ == -1
+jf @START
+if  
+    056D:   actor 1@ defined
+jf @START
+0512: show_permanent_text_box 'MYTAXT'  // Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
+jump @START_WAIT
+
+:START_WAIT 
+wait 0
+if
+    056E:   car 0@ defined
+jf @START
+Car.StorePos(0@, 27@, 28@, 29@)
+if and
+    Player.Defined($PLAYER_CHAR)
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
+jf @START_EXIT
+2@ = Car.Health(0@)
+if
+    2@ > 250
+jf @START_EXIT  
+if
+    00E1:  player 0 pressed_key 4
+jf @START_WAIT 
+if
+    09ED:   actor 1@ is_within_field_of_view_actor $PLAYER_ACTOR
+jf @START_NV
+04ED: load_animation "MISC" 
+if 
+    04EE:   animation "MISC" loaded
+jf @START_WAIT 
+Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
+0063: 23@ -= 27@ // (float)
+0063: 24@ -= 28@ // (float)
+0604: get_Z_angle_for_point 23@ 24@ store_to 21@
+21@ += 180.0
+Actor.Angle($PLAYER_ACTOR) = 21@ 
+0605: actor $PLAYER_ACTOR perform_animation "HIKER_POSE_L" IFP "MISC" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+TIMERA = 0 
+jump @ENTER_1
+
+:START_NV
+TIMERA = 1500
+
+:ENTER_1 
+if
+    not Player.WantedLevel($PLAYER_CHAR) > 0
+jf @START_WANTED
+jump @ENTERING
+
+:START_WANTED
+03E6: remove_text_box
+020A: set_car 0@ door_status_to 3
+03E5: show_text_box 'WANTED' // We won't help fugitives escape!
+00A8: set_car 0@ to_psycho_driver
+wait 5000
+jump @FINISH
+
+:START_EXIT
+wait 0
+03E6: remove_text_box
+jump @FINISH
+
+:ENTERING
+0512: show_permanent_text_box 'TAXI_2'
+Car.StorePos(0@, 27@, 28@, 29@)
+Car.DriveTo(0@, 27@, 28@, 29@)
+Car.ToggleTaxiLight(0@) = True
+09B0: set_car 0@ accessible_for_player_using_controller 1 
+03BF: set_player $PLAYER_CHAR ignored_by_everyone 1
+02A9: set_actor 1@ immune_to_nonplayer 1
+050F: get_max_wanted_level_to 18@
+jump @ENTER_CHECK 
+
+:ENTER_CHECK 
+wait 0          
+01F0: set_max_wanted_level_to 0
+2@ = Car.Health(0@)
+if
+    2@ > 250
+jf @EXIT_2
+if and
+    not Actor.Dead(1@)
+    Actor.InCar(1@, 0@)
+jf @EXIT_2
+if
+    not Actor.Dead($PLAYER_ACTOR)
+jf @EXIT_1  
+if
+    not Actor.InCar($PLAYER_ACTOR, 0@)
+jf @INSIDE
+if
+    09DE:   actor $PLAYER_ACTOR entering_car
+jf @ENTER_RUN
+jump @CANCEL_1   
+
+:ENTER_RUN
+wait 0
+if
+    TIMERA >= 1000
+jf @CANCEL_1 
+05CA: AS_actor $PLAYER_ACTOR enter_car 0@ passenger_seat 1 time 10000
+jump @CANCEL_1   
+
+:CANCEL_1
+if or
+    00E1: player 0 pressed_key 0
+    00E1: player 0 pressed_key 1 
+jf @ENTER_CHECK
+jump @EXIT_1
+
+:EXIT_1
+gosub @CAR_AWAY
+:EXIT_2
+03E6: remove_text_box
+0687: clear_actor $PLAYER_ACTOR task 
+jump @END  
+
+
+:INSIDE
+wait 0
+03E6: remove_text_box
+0512: show_permanent_text_box 'MYCONT'
+stream_custom_script "TAXICAMERA.S"
+3@ = 0
+
+:INSIDE_CHECK
+wait 0
+if and
+    not Actor.Dead(1@)
+    Actor.InCar(1@, 0@)
+jf @NO_DRIVER
+2@ = Car.Health(0@)
+if
+    2@ >= 250
+jf @CAR_BROKEN 
+if and
+    Player.Defined($PLAYER_ACTOR)
+    Actor.InCar($PLAYER_ACTOR, 0@)
+jf @EXIT_3 
+00E2: get_player 0 key 17 state_to 4@
+//02FD: show_text_2numbers_lowpriority GXT 'BB_05' numbers 3@ 4@ time 1000 flag 1
+if and
+    3@ == 0    
+    4@ == 255
+jf @RELEASE
+jump @TARGET_CHECK
+
+:NO_DRIVER
+03E6: remove_text_box
+Car.SetMaxSpeed(0@, 0.0)
+03E5: show_text_box 'ABRUPT'   
+05CD: AS_actor $PLAYER_ACTOR exit_car 0@
+jump @END
+
+:CAR_BROKEN
+03E6: remove_text_box
+03E5: show_text_box 'ABRUPT'
+Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@) 
+0622: AS_actor $PLAYER_ACTOR bail_car 0@
+0622: AS_actor 1@ bail_car 0@
+05DA: AS_actor 1@ run_away_in_panic_from 23@ 24@ 25@ away_radius 100.0 timelimit 15000
+jump @END
+
+:EXIT_3
+gosub @CAR_AWAY
+jump @END
+
+// TARGET CHECKS
+:TARGET_CHECK
+if
+    get_target_blip_coords 27@ 28@ 29@
+jf @NO_TARGET
+02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
+050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 27@ 28@ 29@
+if
+    26@ < 3000.0
+jf @TARGET_FAR
+07EF: get_town_number_from_point 27@ 28@ 29@ store_to 22@
+0087: 30@ = 26@ // float
+30@ *= 0.05
+0090: 30@ = float 30@ to_integer  
+if 
+   Player.Money($PLAYER_CHAR) > 30@
+jf @NO_MONEY
+
+:TOWN_CHECK
+// permits destination when cities are unlocked
+if
+    get_target_blip_coords 27@ 28@ 29@
+jf @NO_TARGET
+01E3: show_text_1number_styled GXT "BB_15" number $STAT_UNLOCKED_CITIES_NUMBER time 1000 style 1  
+if
+    $STAT_UNLOCKED_CITIES_NUMBER < 2
+jf @DRIVE
+if
+    28@ > 600.0
+jf @TOWN_CHECK_1
+if
+   $STAT_UNLOCKED_CITIES_NUMBER == 1
+jf @TARGET_LOCKED
+if and
+    27@ < -1309.42
+    28@ < 1510.93
+jf @TARGET_LOCKED
+jump @DRIVE
+
+:TOWN_CHECK_1
+if
+    27@ < 153.00
+jf @DRIVE
+if
+   $STAT_UNLOCKED_CITIES_NUMBER == 0
+jf @DRIVE
+if and
+    27@ > -950.42
+    28@ > 225.93
+jf @TARGET_LOCKED
+jump @DRIVE
+
+
+:NO_TARGET
+03E5: show_text_box 'TAXNMRK' // You need to mark a destination. Pick a destination in the pause menu map, and press [~k~~VEHICLE_FIREWEAPON~] once the resumed to begin. 
+jump @RELEASE
+
+:TARGET_FAR   
+03E5: show_text_box 'DESFARW'  // Destination is too far! Press [~k~~VEHICLE_FIREWEAPON~] if your destination is changed.
+jump @RELEASE
+
+:TARGET_LOCKED  
+03E5: show_text_box 'DESREST' // This area is not yet accessible.
+jump @RELEASE
+
+:NO_MONEY
+03E5: show_text_box 'NOMONEY' // Your Money is not enough for this ride. Press [~k~~VEHICLE_FIREWEAPON~] if your destination is changed. Otherwise get out of the car. 
+jump @RELEASE
+
+:RELEASE
+0085: 3@ = 4@ // (int)
+jump @INSIDE_CHECK
+
+
+
+:DRIVE
+0085: 3@ = 4@ // (int)
+jump @ARRIVED
+
+
+
+:ARRIVED
+wait 0
+03E6: remove_text_box
+Car.SetDriverBehaviour(0@, 0)
+Car.SetMaxSpeed(0@, 0.0)
+05CD: AS_actor $PLAYER_ACTOR exit_car 0@
+2@ = Car.Health(0@)
+if and
+    2@ >= 250
+    not Actor.Dead(1@)
+jf @END        
+gosub @CAR_AWAY
+Car.SetToPsychoDriver(0@)
+jump @END
+
+
+//END PROCEDURES
+:CAR_AWAY
+Car.SetMaxSpeed(0@, 30.0)
+Car.SetToNormalDriver(0@)
+0407: store_coords_to 27@ 28@ 29@ from_car 0@ with_offset -500.0 500.0 0.6 
+02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+Car.DriveTo(0@, 27@, 28@, 29@)
+return
+
+:END
+09B0: set_car 0@ accessible_for_player_using_controller 0
+03BF: set_player $PLAYER_CHAR ignored_by_everyone 0
+01F0: set_max_wanted_level_to 18@
+
+:FINISH
+03E5: show_text_box 'TAXI_3'
+Actor.RemoveReferences(1@)
+Car.RemoveReferences(0@)
+jump @START 
