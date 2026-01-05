@@ -18,21 +18,21 @@ jf @START
 if
     056E:   car 0@ defined
 jf @START
-08EC: 18@ = car 0@ class 
+08EC: 17@ = car 0@ class 
 if 
-   18@ == 6
+   17@ == 6
 jf @START  
 046C: 1@ = car 0@ driver
 if
     not 1@ == -1
 jf @START
-09B3: get_car 0@ door_status 18@
+09B3: get_car 0@ door_status 17@
 if
-    18@ < 2
+    17@ < 2
 jf @START
-01E9: 18@ = car 0@ num_passengers 
+01E9: 17@ = car 0@ num_passengers 
 if 
-  18@ == 0 
+  17@ == 0 
 jf @START
 if  
     056D:   actor 1@ defined
@@ -161,10 +161,15 @@ wait 0
 03E6: remove_text_box
 0512: show_permanent_text_box 'MYCONT'
 stream_custom_script "TAXICAMERA.S"
+20@ = 0
+30@ = 0
 3@ = 0
 
 :INSIDE_CHECK
 wait 0
+if
+    Player.Defined($PLAYER_ACTOR)
+jf @EXIT_3
 if and
     not Actor.Dead(1@)
     Actor.InCar(1@, 0@)
@@ -173,10 +178,9 @@ jf @NO_DRIVER
 if
     2@ >= 250
 jf @CAR_BROKEN 
-if and
-    Player.Defined($PLAYER_ACTOR)
+if
     Actor.InCar($PLAYER_ACTOR, 0@)
-jf @EXIT_3 
+jf @EXIT_4
 00E2: get_player 0 key 17 state_to 4@
 //02FD: show_text_2numbers_lowpriority GXT 'BB_05' numbers 3@ 4@ time 1000 flag 1
 if and
@@ -188,20 +192,26 @@ jump @TARGET_CHECK
 :NO_DRIVER
 03E6: remove_text_box
 Car.SetMaxSpeed(0@, 0.0)
-03E5: show_text_box 'ABRUPT'   
+03E5: show_text_box 'ABRUPT'       
 05CD: AS_actor $PLAYER_ACTOR exit_car 0@
 jump @END
 
 :CAR_BROKEN
 03E6: remove_text_box
 03E5: show_text_box 'ABRUPT'
-Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@) 
+Car.StorePos(0@, 23@, 24@, 25@) 
 0622: AS_actor $PLAYER_ACTOR bail_car 0@
 0622: AS_actor 1@ bail_car 0@
 05DA: AS_actor 1@ run_away_in_panic_from 23@ 24@ 25@ away_radius 100.0 timelimit 15000
 jump @END
 
 :EXIT_3
+03E6: remove_text_box
+2@ = Car.Health(0@)
+if and
+    Actor.InCar(1@, 0@)
+    2@ >= 250
+jf @END
 gosub @CAR_AWAY
 jump @END
 
@@ -210,28 +220,29 @@ jump @END
 if
     get_target_blip_coords 27@ 28@ 29@
 jf @NO_TARGET
-02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+02C1: store_to 7@ 8@ 9@ car_path_coords_closest_to 27@ 28@ 29@
 Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
-050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 27@ 28@ 29@
+050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 7@ 8@ 9@
 if
     26@ < 1000.0
 jf @TARGET_FAR
 if
     26@ > 80.0
 jf @TARGET_NEAR
-07EF: get_town_number_from_point 27@ 28@ 29@ store_to 22@
-0087: 30@ = 26@ // float
-30@ *= 0.05
-0090: 30@ = float 30@ to_integer  
+07EF: get_town_number_from_point 7@ 8@ 9@ store_to 22@  
+0087: 13@ = 26@ // float
+13@ *= 0.05
+0090: 13@ = float 13@ to_integer  
 if
-    30@ < 8
+    13@ < 8
 jf @MONEY_CHECK
-30@ = 8
+13@ = 8
 
 :MONEY_CHECK
+005A: 30@ += 13@  // (int)
 if 
    Player.Money($PLAYER_CHAR) > 30@
-jf @TOWN_CHECK
+jf @NO_MONEY
 
 :TOWN_CHECK
 // permits destination when cities are unlocked
@@ -293,15 +304,109 @@ jump @INSIDE_CHECK
 
 
 
-:DRIVE
+:DRIVE    
+wait 0 
+20@ = 1    // Trip Started Flag
+03E6: remove_text_box 
+0512: show_permanent_text_box 'MCONT2' // [~k~~VEHICLE_HANDBRAKE~]  Pause Ride. [~k~~CONVERSATION_YES~] Skip Ride.  [SHIFT]  Follow Traffic Rules.   [c] Toggle TaxiCamera.    [~k~~VEHICLE_ENTER_EXIT~]  Exit.
+00BC: show_text_highpriority GXT 'TAXI_5' time 3000 flag 1
+stream_custom_script "TRAFFICRULES.S" 
+03CC: enable_car 0@ stuck_check_distance_to 5.0 time_to 25000
+0190: add_car 0@ to_upsidedown_check // 6 max
+Car.SetToNormalDriver(0@)
+Car.SetDriverBehaviour(0@, CarMission.Cruise)
+Car.SetMaxSpeed(0@, 30.0)
+//02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+04D3: get_nearest_car_path_coords_from 27@ 28@ 29@ type -1 store_to 7@ 8@ 9@
+
+
+:DRIVE_CHECK
+wait 0
+if
+    Player.Defined($PLAYER_CHAR)
+jf @EXIT_DRIVE
+if and
+    not Actor.Dead(1@)
+    Actor.InCar(1@, 0@)
+jf @NO_DRIVER
+2@ = Car.Health(0@)
+if
+    2@ >= 250
+jf @CAR_BROKEN
+Car.DriveTo(0@, 7@, 8@, 9@)
+Car.StorePos(0@, 23@, 24@, 25@)
+050A: 19@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 7@ 8@ 9@ 
+if
+    19@ < 5.0
+    //01AF: car 0@ sphere 0 in_sphere 7@ 8@ 9@ radius 5.0 5.0 1.0
+jf @ROOF_CHECK
+jump @ARRIVED
+
+:ROOF_CHECK
+if
+    018F:   is_car_stuck_on_roof 0@
+jf @STUCK_CHECK
+jump @ON_ROOF
+
+:STUCK_CHECK
+if
+    03CE: car 0@ stuck
+jf @DRIVE_CONTROLS
+jump @TRIP_SKIP  
+
+:DRIVE_CONTROLS
+00E2: get_player 0 key 15 state_to 15@
+if     
+    not 15@ == 255
+jf @ARRIVED
+00E2: get_player 0 key 6 state_to 16@
+if
+    not 16@ == 255
+jf @PAUSED
+00E2: get_player 0 key 11 state_to 11@
+if
+    not 11@ == 255
+jf @TRIP_SKIP
+jump @DRIVE_CHECK
+
+:ON_ROOF
+03E6: remove_text_box
+03E5: show_text_box 'ABRUPT'       
+05CD: AS_actor $PLAYER_ACTOR exit_car 0@
+05CD: AS_actor 1@ exit_car 0@
+jump @EXIT_DRIVE
+
+:EXIT_4
+if
+    20@ == 1    // Trip Started Flag
+jf @EXIT_3
+03CD: disable_car 0@ stuck_check
+jump @ARRIVED
+
+:EXIT_DRIVE
+03CD: disable_car 0@ stuck_check
+jump @EXIT_3
+
+
+
+:PAUSED
+Car.SetDriverBehaviour(0@, 0)
+Car.SetMaxSpeed(0@, 0.0)
+03E6: remove_text_box
+00BB: show_text_lowpriority GXT 'PAUSED' time 3000 flag 1  // The ride has been paused.
+0512: show_permanent_text_box 'MYCONT' //[~k~~VEHICLE_FIREWEAPON~]  Ride To Current Destination.   [c] Toggle TaxiCamera.
+jump @INSIDE_CHECK   
+
+:TRIP_SKIP
 0169: set_fade_color_RGB 0 0 0 
 fade 0 2000 
 wait 2200 
-04E4: refresh_game_renderer_at 27@ 28@
-02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+02C1: store_to 7@ 8@ 9@ car_path_coords_closest_to 27@ 28@ 29@
+04E4: refresh_game_renderer_at 7@ 8@
 wait 100 
-29@ += 3.0 
-Car.PutAt(0@, 27@, 28@, 29@)
+//02CE: 29@ = ground_z_at 27@ 28@ 29@ 
+//29@ += 0.5
+Car.PutAt(0@, 7@, 8@, 9@)
 wait 100 
 fade 1 2000  
 26@ *= 0.05 
@@ -312,7 +417,8 @@ fade 1 2000
     26@ += -1 
     end 
 26@ *= -1 
-call_function 4461760 1 1 26@ 
+call_function 4461760 1 1 26@
+30@ *= 2 
 jump @ARRIVED
 
 
@@ -322,13 +428,17 @@ jump @ARRIVED
 Car.SetDriverBehaviour(0@, 0)
 Car.SetMaxSpeed(0@, 0.0)
 05CD: AS_actor $PLAYER_ACTOR exit_car 0@
-20@ = 0
+20@ = 0 // Trip Ended Flag
 if
     Player.Money($PLAYER_CHAR) > 30@
-jf @ARRIVED_WAIT
+jf @UNAFFORD
 01E4: show_text_1number_lowpriority GXT 'FARED' number 30@ time 2000 flag 1  // Cab Fare $~1~
 30@ *= -1
 Player.Money($PLAYER_CHAR) += 30@
+jump @ARRIVED_WAIT
+
+:UNAFFORD
+20@ = 2 // Wanted Level Flag
 
 :ARRIVED_WAIT
 wait 0
@@ -356,9 +466,14 @@ Car.DriveTo(0@, 27@, 28@, 29@)
 return
 
 :END
+Camera.Restore_WithJumpCut
 09B0: set_car 0@ accessible_for_player_using_controller 0
 03BF: set_player $PLAYER_CHAR ignored_by_everyone 0
 01F0: set_max_wanted_level_to 18@
+if
+    20@ == 2
+jf @FINISH
+Player.SetMinWantedLevel($PLAYER_CHAR, 1)
 
 :FINISH
 03E5: show_text_box 'TAXI_3'
