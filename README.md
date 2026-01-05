@@ -13,4 +13,4 @@ It sometimes causes the player to remain ignored by police after the trip ends
 * Handles various trip interruption cases such as: car damaged or stuck, taxi driver got out
 * The mod now properly checks if the player actually has enough money to start the trip
 * It also checks if the destination is within an unlocked region or city
-* The taxi only operates within a certain distance. If the player finds it in a city, then it only operates within the city's limit.
+* The taxi only operates within a certain distance.
