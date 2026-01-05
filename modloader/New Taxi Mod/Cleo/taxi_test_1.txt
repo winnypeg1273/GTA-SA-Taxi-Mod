@@ -22,20 +22,24 @@ jf @START
 if 
    18@ == 6
 jf @START  
-Car.StorePos(0@, 27@, 28@, 29@)
-if 
-    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
+046C: 1@ = car 0@ driver
+if
+    not 1@ == -1
+jf @START
+09B3: get_car 0@ door_status 18@
+if
+    18@ < 2
 jf @START
 01E9: 18@ = car 0@ num_passengers 
 if 
   18@ == 0 
 jf @START
-046C: 1@ = car 0@ driver
-if
-    not 1@ == -1
-jf @START
 if  
     056D:   actor 1@ defined
+jf @START
+Car.StorePos(0@, 27@, 28@, 29@)
+if 
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
 jf @START
 0512: show_permanent_text_box 'MYTAXT'  // Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 jump @START_WAIT
@@ -210,22 +214,30 @@ jf @NO_TARGET
 Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
 050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 27@ 28@ 29@
 if
-    26@ < 3000.0
+    26@ < 1000.0
 jf @TARGET_FAR
+if
+    26@ > 80.0
+jf @TARGET_NEAR
 07EF: get_town_number_from_point 27@ 28@ 29@ store_to 22@
 0087: 30@ = 26@ // float
 30@ *= 0.05
 0090: 30@ = float 30@ to_integer  
+if
+    30@ < 8
+jf @MONEY_CHECK
+30@ = 8
+
+:MONEY_CHECK
 if 
    Player.Money($PLAYER_CHAR) > 30@
-jf @NO_MONEY
+jf @TOWN_CHECK
 
 :TOWN_CHECK
 // permits destination when cities are unlocked
 if
     get_target_blip_coords 27@ 28@ 29@
 jf @NO_TARGET
-01E3: show_text_1number_styled GXT "BB_15" number $STAT_UNLOCKED_CITIES_NUMBER time 1000 style 1  
 if
     $STAT_UNLOCKED_CITIES_NUMBER < 2
 jf @DRIVE
@@ -260,7 +272,11 @@ jump @DRIVE
 jump @RELEASE
 
 :TARGET_FAR   
-03E5: show_text_box 'DESFARW'  // Destination is too far! Press [~k~~VEHICLE_FIREWEAPON~] if your destination is changed.
+03E5: show_text_box 'DESFARW'  // Destination is too far! Pick another.
+jump @RELEASE
+
+:TARGET_NEAR
+03E5: show_text_box 'DESNEAR'  // You can literally walk to there! Pick another destination.
 jump @RELEASE
 
 :TARGET_LOCKED  
@@ -278,22 +294,53 @@ jump @INSIDE_CHECK
 
 
 :DRIVE
-0085: 3@ = 4@ // (int)
+0169: set_fade_color_RGB 0 0 0 
+fade 0 2000 
+wait 2200 
+04E4: refresh_game_renderer_at 27@ 28@
+02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+wait 100 
+29@ += 3.0 
+Car.PutAt(0@, 27@, 28@, 29@)
+wait 100 
+fade 1 2000  
+26@ *= 0.05 
+0090: 26@ = float 26@ to_integer 
+    if 
+      26@ > 0 
+    then
+    26@ += -1 
+    end 
+26@ *= -1 
+call_function 4461760 1 1 26@ 
 jump @ARRIVED
 
 
 
 :ARRIVED
-wait 0
 03E6: remove_text_box
 Car.SetDriverBehaviour(0@, 0)
 Car.SetMaxSpeed(0@, 0.0)
 05CD: AS_actor $PLAYER_ACTOR exit_car 0@
+20@ = 0
+if
+    Player.Money($PLAYER_CHAR) > 30@
+jf @ARRIVED_WAIT
+01E4: show_text_1number_lowpriority GXT 'FARED' number 30@ time 2000 flag 1  // Cab Fare $~1~
+30@ *= -1
+Player.Money($PLAYER_CHAR) += 30@
+
+:ARRIVED_WAIT
+wait 0
 2@ = Car.Health(0@)
 if and
     2@ >= 250
     not Actor.Dead(1@)
-jf @END        
+jf @END   
+if and
+    Player.Defined($PLAYER_ACTOR)
+    not Actor.InCar($PLAYER_ACTOR, 0@)
+jf @ARRIVED_WAIT    
 gosub @CAR_AWAY
 Car.SetToPsychoDriver(0@)
 jump @END

@@ -1,11 +1,12 @@
 MYTAXT Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 MYCONT ~k~~VEHICLE_FIREWEAPON~ Ride to current Destination.~n~C Toggle Taxi Camera.
 MCONT2 ~k~~VEHICLE_HANDBRAKE~ Pause Ride.~n~~k~~CONVERSATION_YES~ Skip Ride.~n~SHIFT Hurry/Slow.~n~C Toggle TaxiCamera.~n~~k~~VEHICLE_ENTER_EXIT~  Exit.
-NOMONEY Your Money is not enough for this ride.~n~~k~~VEHICLE_FIREWEAPON~ Change destination.~n~~k~~VEHICLE_ENTER_EXIT~ Exit car.   
+NOMONEY Your Money is not enough for this ride.~n~Press ~k~~VEHICLE_FIREWEAPON~ if your destination is changed.~n~Otherwise get out of the car.
 FARED Cab Fare $~1~
 TAXNMRK You need to mark a destination. Pick a destination in the pause menu map, and press ~k~~VEHICLE_FIREWEAPON~ once resumed to begin.
 DESFARW Destination is too far!
-DESREST This town is not yet opened. 
+DESNEAR You can literally walk to there! Pick another destination.
+DESREST This area is not yet opened.
 PAUSED The ride has been paused.
 TAXI_2 Where do you want to go?
 TAXI_3 This should be the place...
