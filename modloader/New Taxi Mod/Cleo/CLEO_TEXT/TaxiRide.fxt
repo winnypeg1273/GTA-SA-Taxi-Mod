@@ -1,13 +1,15 @@
 MYTAXT Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 MYCONT ~k~~VEHICLE_FIREWEAPON~ Ride to current Destination.~n~C Toggle Taxi Camera.
-MCONT2 ~k~~VEHICLE_HANDBRAKE~ Pause Ride.~n~~k~~CONVERSATION_YES~ Skip Ride.~n~SHIFT Hurry Driver.~n~C Toggle Taxi Camera.~n~~k~~VEHICLE_ENTER_EXIT~  Exit.
+MCONT2 ~k~~VEHICLE_HANDBRAKE~ Pause Ride~n~~k~~CONVERSATION_YES~ Skip Ride (extra cost)~n~SHIFT Hurry Driver~n~C Toggle Taxi View~n~~k~~VEHICLE_ENTER_EXIT~  Exit
 NOMONEY Your Money is not enough for this ride.~n~Press ~k~~VEHICLE_FIREWEAPON~ if your destination is changed.~n~Otherwise get out of the car.
-FARED Cab Fare $~1~
-NFARE Next Ride Fare $~1~
+FARED Total Fare $~1~
+NFARE Next Ride - Cab fare $~1~
+ZONNAME	Next destination: ~a~
 TAXNMRK You need to mark a destination. Pick a destination in the pause menu map, and press ~k~~VEHICLE_FIREWEAPON~ once resumed to begin.
 DESFARW Destination is too far!
 DESNEAR You can literally walk to there! Pick another destination.
 DESREST This area is not yet opened.
+PROCEED	Press ~k~~VEHICLE_FIREWEAPON~ if you agree with this price.
 PAUSED The ride has been paused.
 TAXI_5 This job wouldn't be so bad if it weren't for all the shitty drivers in Los Santos...
 MYTAXT Press ~k~~PED_ANSWER_PHONE~ to enter cab as a passenger.

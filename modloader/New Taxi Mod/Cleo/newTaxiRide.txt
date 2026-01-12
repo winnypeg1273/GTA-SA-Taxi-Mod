@@ -55,9 +55,14 @@ if and
     00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
 jf @START_EXIT
 2@ = Car.Health(0@)
-if
+if and
     2@ > 250
-jf @START_EXIT  
+    Actor.InCar(1@, 0@) 
+jf @START_EXIT
+01E9: 17@ = car 0@ num_passengers 
+if 
+  17@ == 0 
+jf @START_EXIT
 if
     00E1:  player 0 pressed_key 4
 jf @START_WAIT 
@@ -121,6 +126,10 @@ if and
     not Actor.Dead(1@)
     Actor.InCar(1@, 0@)
 jf @EXIT_2
+01E9: 17@ = car 0@ num_passengers 
+if 
+  17@ == 0
+jf @EXIT_2
 if
     not Actor.Dead($PLAYER_ACTOR)
 jf @EXIT_1  
@@ -161,8 +170,13 @@ wait 0
 0512: show_permanent_text_box 'MYCONT'
 stream_custom_script "TAXICAMERA.S"
 20@ = 0
+13@ = 0
 30@ = 0
 3@ = 0
+5@ = 0
+10@ = 0.0
+11@ = 0.0
+12@ = 1000.0
 
 :INSIDE_CHECK
 wait 0
@@ -181,12 +195,11 @@ if
     Actor.InCar($PLAYER_ACTOR, 0@)
 jf @EXIT_4
 00E2: get_player 0 key 17 state_to 4@
-//02FD: show_text_2numbers_lowpriority GXT 'BB_05' numbers 3@ 4@ time 1000 flag 1
 if and
     3@ == 0    
     4@ == 255
 jf @RELEASE
-jump @TARGET_CHECK
+jump @TARGET_CHECK 
 
 :NO_DRIVER
 03E6: remove_text_box
@@ -219,27 +232,31 @@ jump @END
 if
     get_target_blip_coords 27@ 28@ 29@
 jf @NO_TARGET
-02C1: store_to 7@ 8@ 9@ car_path_coords_closest_to 27@ 28@ 29@
+//02C1: store_to 7@ 8@ 9@ car_path_coords_closest_to 27@ 28@ 29@
 Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
-050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 7@ 8@ 9@
+050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 27@ 28@ 29@
 if
     26@ < 1000.0
 jf @TARGET_FAR
 if
     26@ > 80.0
-jf @TARGET_NEAR
-07EF: get_town_number_from_point 7@ 8@ 9@ store_to 22@  
-0087: 13@ = 26@ // float
-13@ *= 0.05
-0090: 13@ = float 13@ to_integer  
+jf @TARGET_NEAR 
+0087: 30@ = 26@ // float
+30@ *= 0.05
+0090: 30@ = float 30@ to_integer  
 if
-    13@ < 8
-jf @MONEY_CHECK
-13@ = 8
+    30@ < 8
+jf @MONEY_CHECK_1
+30@ = 8
 
-:MONEY_CHECK
-005A: 30@ += 13@  // (int)
-01E4: show_text_1number_lowpriority GXT 'NFARE' number 30@ time 2000 flag 1  // Cab Fare $~1~
+:MONEY_CHECK_1
+if
+    001D:   13@ > 30@  // (int) old price > new price
+jf @MONEY_CHECK_2
+0085: 30@ = 13@ // (int) 
+    
+:MONEY_CHECK_2 
+01E4: show_text_1number_lowpriority GXT 'NFARE' number 30@ time 2000 flag 1  // Next Ride - Cab Fare $~1~
 if 
    Player.Money($PLAYER_CHAR) > 30@
 jf @NO_MONEY
@@ -249,9 +266,13 @@ jf @NO_MONEY
 if
     get_target_blip_coords 27@ 28@ 29@
 jf @NO_TARGET
+08F1: get_zone_at 27@ 28@ 29@ nameB_to 22@s // 8-byte string
+if
+    not 22@s == 'REST'
+jf @TARGET_LOCKED 
 if
     $STAT_UNLOCKED_CITIES_NUMBER < 2
-jf @DRIVE
+jf @DRIVE_CONFIRM
 if
     28@ > 600.0
 jf @TOWN_CHECK_1
@@ -262,27 +283,27 @@ if and
     27@ < -1309.42
     28@ < 1510.93
 jf @TARGET_LOCKED
-jump @DRIVE
+jump @DRIVE_CONFIRM
 
 :TOWN_CHECK_1
 if
     27@ < 153.00
-jf @DRIVE
+jf @DRIVE_CONFIRM
 if
    $STAT_UNLOCKED_CITIES_NUMBER == 0
-jf @DRIVE
+jf @DRIVE_CONFIRM
 if and
     27@ > -950.42
     28@ > 225.93
 jf @TARGET_LOCKED
-jump @DRIVE
+jump @DRIVE_CONFIRM
 
 
 :NO_TARGET
 03E5: show_text_box 'TAXNMRK' // You need to mark a destination. Pick a destination in the pause menu map, and press [~k~~VEHICLE_FIREWEAPON~] once the resumed to begin. 
 jump @RELEASE
 
-:TARGET_FAR   
+:TARGET_FAR       
 03E5: show_text_box 'DESFARW'  // Destination is too far! Pick another.
 jump @RELEASE
 
@@ -298,6 +319,17 @@ jump @RELEASE
 03E5: show_text_box 'NOMONEY' // Your Money is not enough for this ride. Press [~k~~VEHICLE_FIREWEAPON~] if your destination is changed. Otherwise get out of the car. 
 jump @RELEASE
 
+:DRIVE_CONFIRM
+050A: 19@ = distance_between_XYZ 10@ 11@ 12@ and_XYZ 27@ 28@ 29@
+if 
+    19@ > 5.0
+jf @DRIVE
+03E5: show_text_box 'PROCEED'
+0087: 10@ = 27@ // (float)
+0087: 11@ = 28@ // (float)
+0087: 12@ = 29@ // (float)
+
+
 :RELEASE
 0085: 3@ = 4@ // (int)
 jump @INSIDE_CHECK
@@ -307,17 +339,16 @@ jump @INSIDE_CHECK
 :DRIVE    
 wait 0 
 20@ = 1    // Trip Started Flag
+0085: 13@ = 30@ // (int)
 03E6: remove_text_box 
 0512: show_permanent_text_box 'MCONT2' // [~k~~VEHICLE_HANDBRAKE~]  Pause Ride. [~k~~CONVERSATION_YES~] Skip Ride.  [SHIFT]  Follow Traffic Rules.   [c] Toggle TaxiCamera.    [~k~~VEHICLE_ENTER_EXIT~]  Exit.
-00BC: show_text_highpriority GXT 'TAXI_5' time 3000 flag 1
 stream_custom_script "TRAFFICRULES.S" 
 03CC: enable_car 0@ stuck_check_distance_to 5.0 time_to 25000
 0190: add_car 0@ to_upsidedown_check // 6 max
+Car.StorePos(0@, 10@, 11@, 12@)
 Car.SetToNormalDriver(0@)
-Car.SetDriverBehaviour(0@, CarMission.Cruise)
+Car.SetDriverBehaviour(0@, 12)
 Car.SetMaxSpeed(0@, 30.0)
-//02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
-04D3: get_nearest_car_path_coords_from 27@ 28@ 29@ type -1 store_to 7@ 8@ 9@
 
 
 :DRIVE_CHECK
@@ -333,14 +364,29 @@ jf @NO_DRIVER
 if
     2@ >= 250
 jf @CAR_BROKEN
+04D3: get_nearest_car_path_coords_from 27@ 28@ 29@ type -1 store_to 7@ 8@ 9@
 Car.DriveTo(0@, 7@, 8@, 9@)
-Car.StorePos(0@, 23@, 24@, 25@)
-050A: 19@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 7@ 8@ 9@ 
+050A: 19@ = distance_between_XYZ 7@ 8@ 9@ and_XYZ 10@ 11@ 12@
 if
-    19@ < 5.0
-    //01AF: car 0@ sphere 0 in_sphere 7@ 8@ 9@ radius 5.0 5.0 1.0
+    19@ > 15.0
+jf @NODE_CHECK
+0087: 10@ = 7@ // float
+0087: 11@ = 8@ // float
+0087: 12@ = 9@ // float
+TIMERB = 0
+jump @ROOF_CHECK
+
+:NODE_CHECK
+02E3: 5@ = car 0@ speed
+if and
+    TIMERB > 1000
+    01AF:   car 0@ sphere 0 in_sphere 7@ 8@ 9@ radius 15.0 15.0 1.0
 jf @ROOF_CHECK
+if
+    5@ == 0.0
+jf @ROOF_CHECK 
 jump @ARRIVED
+
 
 :ROOF_CHECK
 if
@@ -371,6 +417,7 @@ jump @DRIVE_CHECK
 
 :ON_ROOF
 03E6: remove_text_box
+00BB: show_text_lowpriority GXT 'TAXI_5' time 3000 flag 1
 03E5: show_text_box 'ABRUPT'       
 05CD: AS_actor $PLAYER_ACTOR exit_car 0@
 05CD: AS_actor 1@ exit_car 0@
@@ -418,7 +465,9 @@ fade 1 2000
     end 
 26@ *= -1 
 call_function 4461760 1 1 26@
-30@ *= 2 
+008F: 13@ = integer 30@ to_float
+13@ *= 1.25
+0090: 30@ = float 13@ to_integer 
 jump @ARRIVED
 
 
