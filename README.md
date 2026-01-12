@@ -15,7 +15,7 @@ It sometimes causes the player to remain ignored by police after the trip ends
 * It also checks if the destination is within an unlocked region or city
 * The taxi only operates within a certain distance
 
-## If I had time
+## To do or not to do
 * Add more functionalities / conversations
 * Add collision checks along with stuck checks
 * Add checks if the taxi really stops when it arrives at the destination or stops for traffic only
