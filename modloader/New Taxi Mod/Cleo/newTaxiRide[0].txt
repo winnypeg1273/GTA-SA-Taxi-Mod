@@ -103,6 +103,7 @@ jump @FINISH
 :ENTERING
 Car.StorePos(0@, 27@, 28@, 29@)
 Car.DriveTo(0@, 27@, 28@, 29@)
+Car.ToggleTaxiLight(0@) = True
 09B0: set_car 0@ accessible_for_player_using_controller 1 
 03BF: set_player $PLAYER_CHAR ignored_by_everyone 1
 02A9: set_actor 1@ immune_to_nonplayer 1
@@ -219,14 +220,15 @@ jump @END
 if
     get_target_blip_coords 27@ 28@ 29@
 jf @NO_TARGET
+02C1: store_to 7@ 8@ 9@ car_path_coords_closest_to 27@ 28@ 29@
 Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
-050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 27@ 28@ 29@
+050A: 26@ = distance_between_XYZ 23@ 24@ 25@ and_XYZ 7@ 8@ 9@
 if
-    26@ < 1200.0
-jf @TARGET_FAR  
+    26@ < 1000.0
+jf @TARGET_FAR
 if
-    26@ > 0.0
-jf @TARGET_NEAR
+    26@ > 80.0
+jf @TARGET_NEAR 
 0087: 30@ = 26@ // float
 30@ *= 0.05
 0090: 30@ = float 30@ to_integer  
@@ -258,7 +260,7 @@ if
 jf @TARGET_LOCKED 
 if
     $STAT_UNLOCKED_CITIES_NUMBER < 2
-jf @DRIVE_CONFIRM
+jf @DRIVE
 if
     28@ > 600.0
 jf @TOWN_CHECK_1
@@ -269,20 +271,20 @@ if and
     27@ < -1309.42
     28@ < 1510.93
 jf @TARGET_LOCKED
-jump @DRIVE_CONFIRM
+jump @DRIVE
 
 :TOWN_CHECK_1
 if
     27@ < 153.00
-jf @DRIVE_CONFIRM
+jf @DRIVE
 if
    $STAT_UNLOCKED_CITIES_NUMBER == 0
-jf @DRIVE_CONFIRM
+jf @DRIVE
 if and
     27@ > -950.42
     28@ > 225.93
 jf @TARGET_LOCKED
-jump @DRIVE_CONFIRM
+jump @DRIVE
 
 
 :NO_TARGET
@@ -305,17 +307,6 @@ jump @RELEASE
 03E5: show_text_box 'NOMONEY' // Your Money is not enough for this ride. Press [~k~~VEHICLE_FIREWEAPON~] if your destination is changed. Otherwise get out of the car. 
 jump @RELEASE
 
-:DRIVE_CONFIRM
-050A: 19@ = distance_between_XYZ 10@ 11@ 12@ and_XYZ 27@ 28@ 29@
-if 
-    19@ > 2.0
-jf @DRIVE
-03E5: show_text_box 'PROCEED'
-0087: 10@ = 27@ // (float)
-0087: 11@ = 28@ // (float)
-0087: 12@ = 29@ // (float)
-jump @RELEASE
-
 :RELEASE
 0085: 3@ = 4@ // (int)
 jump @INSIDE_CHECK
@@ -329,14 +320,13 @@ wait 0
 03E6: remove_text_box 
 0512: show_permanent_text_box 'MCONT2' // [~k~~VEHICLE_HANDBRAKE~]  Pause Ride. [~k~~CONVERSATION_YES~] Skip Ride.  [SHIFT]  Follow Traffic Rules.   [c] Toggle TaxiCamera.    [~k~~VEHICLE_ENTER_EXIT~]  Exit.
 stream_custom_script "TRAFFICRULES.S" 
-0A21: set_car 0@ not_affected_by_cheats 1
 03CC: enable_car 0@ stuck_check_distance_to 5.0 time_to 25000
 0190: add_car 0@ to_upsidedown_check // 6 max
-0407: store_coords_to 10@ 11@ 12@ from_car 0@ with_offset 3000.0 3000.0 100.0
+Car.StorePos(0@, 10@, 11@, 12@)
 Car.SetToNormalDriver(0@)
 Car.SetDriverBehaviour(0@, 12)
 Car.SetMaxSpeed(0@, 30.0)
-02CE: 29@ = ground_z_at 27@ 28@ 29@
+
 
 :DRIVE_CHECK
 wait 0
@@ -353,21 +343,30 @@ if
 jf @CAR_BROKEN
 04D3: get_nearest_car_path_coords_from 27@ 28@ 29@ type -1 store_to 7@ 8@ 9@
 Car.DriveTo(0@, 7@, 8@, 9@)
-02E3: 5@ = car 0@ speed
+050A: 19@ = distance_between_XYZ 7@ 8@ 9@ and_XYZ 10@ 11@ 12@
 if
-    5@ > 0.0
+    19@ > 15.0
 jf @NODE_CHECK
+0087: 10@ = 7@ // float
+0087: 11@ = 8@ // float
+0087: 12@ = 9@ // float
+TIMERB = 0
 jump @ROOF_CHECK
 
 :NODE_CHECK
-if
-    01AE:   car 0@ sphere 0 near_point 7@ 8@ 9@ radius 3.0 3.0 stopped
+02E3: 5@ = car 0@ speed
+if and
+    TIMERB > 1000
+    01AF:   car 0@ sphere 0 in_sphere 7@ 8@ 9@ radius 15.0 15.0 1.0
 jf @ROOF_CHECK
+if
+    5@ == 0.0
+jf @ROOF_CHECK 
 jump @ARRIVED
 
+
 :ROOF_CHECK
-if or
-    02BF:   car 0@ sunk
+if
     018F:   is_car_stuck_on_roof 0@
 jf @STUCK_CHECK
 jump @ON_ROOF
@@ -376,21 +375,7 @@ jump @ON_ROOF
 if
     03CE: car 0@ stuck
 jf @DRIVE_CONTROLS
-0407: store_coords_to 7@ 8@ 9@ from_car 0@ with_offset 0.0 0.0 0.0
-0063: 7@ -= 27@  // (float)
-0063: 8@ -= 28@  // (float)
-0604: get_Z_angle_for_point 7@ 8@ store_to 21@
-7@ *= 0.05
-8@ *= 0.05
-0407: store_coords_to 23@ 24@ 25@ from_car 0@ with_offset 0.0 0.0 0.0
-005B: 23@ += 7@  // (float)
-005B: 24@ += 8@  // (float)
-02CE: 25@ = ground_z_at 23@ 24@ 25@
-04D3: get_nearest_car_path_coords_from 23@ 24@ 25@ type -1 store_to 23@ 24@ 25@
-Car.Angle(0@) = 21@
-Car.PutAt(0@, 23@, 24@, 25@)
-jump @DRIVE_CONTROLS 
-
+jump @TRIP_SKIP  
 
 :DRIVE_CONTROLS
 00E2: get_player 0 key 15 state_to 15@
@@ -405,10 +390,7 @@ jf @PAUSED
 if
     not 11@ == 255
 jf @TRIP_SKIP
-if
-    01AD: car 0@ sphere 0 near_point 27@ 28@ radius 5.0 5.0
-jf @DRIVE_CHECK
-jump @ARRIVED
+jump @DRIVE_CHECK
 
 :ON_ROOF
 03E6: remove_text_box
@@ -441,30 +423,26 @@ jump @INSIDE_CHECK
 
 :TRIP_SKIP
 0169: set_fade_color_RGB 0 0 0 
-fade 0 1000 
-wait 1200 
-020A: set_car 0@ door_status_to 4
-04E4: refresh_game_renderer_at 27@ 28@ 
-02CE: 29@ = ground_z_at 27@ 28@ 29@ 
-29@ += 20.0
-Car.PutAt(0@, 27@, 28@, 29@)
-wait 2000
-04E4: refresh_game_renderer_at 27@ 28@
+fade 0 2000 
+wait 2200 
 02C1: store_to 7@ 8@ 9@ car_path_coords_closest_to 27@ 28@ 29@
-Car.PutAt(0@, 7@, 8@, 9@)    
-fade 1 1000 
-020A: set_car 0@ door_status_to 0
-0087: 31@ = 26@ // (float) 
-31@ *= 0.05 
-0090: 31@ = float 31@ to_integer 
+04E4: refresh_game_renderer_at 7@ 8@
+wait 100 
+//02CE: 29@ = ground_z_at 27@ 28@ 29@ 
+//29@ += 0.5
+Car.PutAt(0@, 7@, 8@, 9@)
+wait 100 
+fade 1 2000  
+26@ *= 0.05 
+0090: 26@ = float 26@ to_integer 
     if 
-      31@ > 0 
+      26@ > 0 
     then
-    31@ += -1 
+    26@ += -1 
     end 
-31@ *= -1 
-call_function 4461760 1 1 31@
-30@ *= 2 
+26@ *= -1 
+call_function 4461760 1 1 26@
+30@ += 5 
 jump @ARRIVED
 
 
@@ -514,7 +492,6 @@ return
 :END
 Camera.Restore_WithJumpCut
 09B0: set_car 0@ accessible_for_player_using_controller 0
-0A21: set_car 0@ not_affected_by_cheats 0
 03BF: set_player $PLAYER_CHAR ignored_by_everyone 0
 01F0: set_max_wanted_level_to 18@
 if

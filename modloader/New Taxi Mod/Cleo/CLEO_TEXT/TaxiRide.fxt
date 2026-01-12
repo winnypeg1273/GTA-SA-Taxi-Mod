@@ -1,6 +1,6 @@
 MYTAXT Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 MYCONT ~k~~VEHICLE_FIREWEAPON~ Ride to current Destination.~n~C Toggle Taxi Camera.
-MCONT2 ~k~~VEHICLE_HANDBRAKE~ Pause Ride~n~~k~~CONVERSATION_YES~ Skip Ride (extra cost)~n~SHIFT Hurry Driver~n~C Toggle Taxi View~n~~k~~VEHICLE_ENTER_EXIT~  Exit
+MCONT2 ~k~~VEHICLE_HANDBRAKE~ Pause Ride~n~~k~~CONVERSATION_YES~ Skip Ride (double cost)~n~SHIFT Hurry Driver~n~C Toggle Taxi View~n~~k~~VEHICLE_ENTER_EXIT~  Exit
 NOMONEY Your Money is not enough for this ride.~n~Press ~k~~VEHICLE_FIREWEAPON~ if your destination is changed.~n~Otherwise get out of the car.
 FARED Total Fare $~1~
 NFARE Next Ride - Cab fare $~1~
