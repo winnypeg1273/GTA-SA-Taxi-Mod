@@ -2,7 +2,7 @@
 This is a new &amp; improved taxi ride mod for GTA San Andreas (not entirely mine)
 
 ## New features of this mod
-* Fixes all the mentioned bugs
+* Fixes all the bugs in legacy
 * Handles various trip interruption cases such as: car damaged or stuck, taxi driver got out
 * The mod now properly checks if the player actually has enough money to start the trip
 * It also checks if the destination is within an unlocked region or city
