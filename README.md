@@ -1,13 +1,6 @@
 # GTA SA Taxi Mod
 This is a new &amp; improved taxi ride mod for GTA San Andreas (not entirely mine)
 
-## Legacy Version
-It is originally uploaded by Sarafsuhail
-https://www.mixmods.com.br/2020/02/taxi-ride-mod-chamar-taxi/
-
-### Known issues
-It sometimes causes the player to remain ignored by police after the trip ends
-
 ## New features of this mod
 * Fixes all the mentioned bugs
 * Handles various trip interruption cases such as: car damaged or stuck, taxi driver got out
