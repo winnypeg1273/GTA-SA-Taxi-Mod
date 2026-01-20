@@ -18,29 +18,29 @@ jf @START
 if
     056E:   car 0@ defined
 jf @START
-Car.StorePos(0@, 27@, 28@, 29@)
-if 
-    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 10.0 10.0 2.0 on_foot
-jf @START_OVER
 08EC: 17@ = car 0@ class 
 if 
    17@ == 6
-jf @START_OVER 
+jf @START  
 09B3: get_car 0@ door_status 17@
 if
     17@ < 2
-jf @START_OVER
+jf @START
 01E9: 17@ = car 0@ num_passengers 
 if 
   17@ == 0 
-jf @START_OVER
+jf @START
 046C: 1@ = car 0@ driver
 if
     not 1@ == -1
-jf @START_OVER
+jf @START
 if  
     056D:   actor 1@ defined
-jf @START_OVER
+jf @START
+Car.StorePos(0@, 27@, 28@, 29@)
+if 
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
+jf @START
 0512: show_permanent_text_box 'MYTAXT'  // Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 jump @START_WAIT
 
@@ -52,7 +52,7 @@ jf @START
 Car.StorePos(0@, 27@, 28@, 29@)
 if and
     Player.Defined($PLAYER_CHAR)
-    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 10.0 10.0 2.0 on_foot
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
 jf @START_EXIT
 2@ = Car.Health(0@)
 if
@@ -86,10 +86,6 @@ if
     not Player.WantedLevel($PLAYER_CHAR) > 0
 jf @START_WANTED
 jump @ENTERING
-
-:START_OVER
-Car.RemoveReferences(0@)
-jump @START
 
 :START_WANTED
 03E6: remove_text_box
