@@ -4,13 +4,19 @@
 //-------------MAIN---------------
 0000: NOP 
 
+:setup
+TIMERA = 0
+3@ = 2000
+
 :find_car
-wait 0  
-0513: show_text_box_1number 'SLOT_02' number 0 
-if and
+wait 0 
+if
     Player.Defined($PLAYER_CHAR)
+jf @setup
+if and
     $ONMISSION == 0
-    $ACTIVE_INTERIOR == 0 
+    $ACTIVE_INTERIOR == 0
+    001D: TIMERA > 3@ // int 
 jf @find_car
 8@ = 0
 0AB3: var 369 = -1
@@ -55,16 +61,15 @@ jump @find_car
 
 :find_ped
 wait 0
-0513: show_text_box_1number 'SLOT_02' number 1
 if and
     Player.Defined($PLAYER_CHAR)
     056E: car 0@ defined
     $ONMISSION == 0
     $ACTIVE_INTERIOR == 0
 jf @find_car
-Car.StorePos(0@, 21@, 22@, 23@)
+Actor.StorePos($PLAYER_ACTOR, 21@, 22@, 23@)
 if 
-0AE1: 1@ = random_actor_near_point 21@ 22@ 23@ in_radius 20.0 find_next 1 pass_deads 1 //IF and SET 
+0AE1: 1@ = random_actor_near_point 21@ 22@ 23@ in_radius 30.0 find_next 1 pass_deads 1 //IF and SET 
 jf @find_ped
 if
 056D: actor 1@ defined
@@ -72,6 +77,10 @@ jf @find_ped
 if
 not actor.Dead(1@)
 jf @drop_ped
+if
+    0205:   actor 1@ near_car 0@ radius 20.0 20.0 25.0 flag 0
+jf @drop_ped
+//only civilians
 089F: get_actor 1@ pedtype_to 3@
 if or
     3@ == 4
@@ -79,36 +88,28 @@ if or
     3@ == 20
     3@ == 23
 jf @drop_ped
+// excluding tramps and cab drivers
+0665: get_actor 1@ model_to 3@
 if and
-    not Actor.Model(1@) == 78
-    not Actor.Model(1@) == 79
-    not Actor.Model(1@) == 134
-    not Actor.Model(1@) == 135
-    not Actor.Model(1@) == 136
-    not Actor.Model(1@) == 137
-    not Actor.Model(1@) == 212
-    not Actor.Model(1@) == 213
+    not 3@ == 78
+    not 3@ == 79
+    not 3@ == 134
+    not 3@ == 135
+    not 3@ == 136
+    not 3@ == 137
+    not 3@ == 212
+    not 3@ == 213
 jf @drop_ped
 if and
-    not Actor.Model(1@) == 230
-    not Actor.Model(1@) == 239
+    not 3@ == 230
+    not 3@ == 239
+    not 3@ == 182
+    not 3@ == 206
+    not 3@ == 220
+    not 3@ == 234
+    not 3@ == 261
+    not 3@ == 262
 jf @drop_ped
-/*0AB4: 15@ = var 568
-0AB4: 26@ = var 569
-0AB4: 25@ = var 570
-0AB4: 19@ = var 365
-0AB4: 18@ = var 366
-0AB4: 17@ = var 367
-0AB4: 16@ = var 368
-if and
-803B: not 1@ == 15@
-803B: not 1@ == 26@
-803B: not 1@ == 25@
-803B: not 1@ == 19@
-803B: not 1@ == 18@
-803B: not 1@ == 17@
-803B: not 1@ == 16@
-jf @find_ped  */
 0A96: 14@ = actor 1@ struct      
 0A8E: 13@ = 14@ + 0x484               
 0A8D: 12@ = read_memory 13@ size 1 vp 0 
@@ -122,8 +123,15 @@ jf @drop_ped
 if
     11@ == 7
 jf @drop_ped
+062E: get_actor 1@ task 1466 status_store_to 11@
+if
+    11@ == 7
+jf @drop_ped
+062E: get_actor 1@ task 1712 status_store_to 11@
+if
+    11@ == 7
+jf @drop_ped
 jump @start
-//0AB3: var 369 = 1@
 
 :drop_ped
 Actor.RemoveReferences(1@)
@@ -133,53 +141,49 @@ jump @find_ped
 
 :start
 wait 0
-0513: show_text_box_1number 'SLOT_02' number 2
 gosub @safety_check
 0639: AS_actor 1@ rotate_to_actor 31@
-TIMERA = 0
 
 :start_1
 wait 0
 gosub @safety_check
+062E: get_actor 1@ task 1593 status_store_to 11@
 if
-    not Actor.InCar($PLAYER_ACTOR, 0@)
-jf @drop_all
-if
-    TIMERA > 500
+    11@ == 7
 jf @start_1
+0568: set_actor 1@ untargetable 1
 0605: actor 1@ perform_animation "IDLE_TAXI" IFP "PED" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
-TIMERA = 0
-8@ = Audiostream.Load3D("CLEO\CLEO_AUDIO\WHISTLE.MP3")
-Audiostream.LinkToActor(8@, 1@)
-0ABC: set_audiostream 8@ volume 0.3
-02E3: 7@ = car 0@ speed
-if
-    7@ > 1.0
-jf @start_2
-Audiostream.PerformAction(8@, PLAY)
+//8@ = Audiostream.Load3D("CLEO\CLEO_AUDIO\WHISTLE.MP3")
+//Audiostream.LinkToActor(8@, 1@)
+//0ABC: set_audiostream 8@ volume 0.3
 
 :start_2
 wait 0
 gosub @safety_check
+062E: get_actor 1@ task 1541 status_store_to 11@
 if
-    TIMERA > 1000
+    11@ == 7
 jf @start_2
-Car.DoorStatus(0@, 3)
+Car.StorePos(0@, 27@, 28@, 29@)
+Car.DriveTo(0@, 27@, 28@, 29@)
 05CA: AS_actor 1@ enter_car 0@ passenger_seat -1 time -1
-TIMERA = 0
+0568: set_actor 1@ untargetable 0
 
 :entering
 wait 0
 gosub @safety_check
-Car.SetMaxSpeed(0@, 0.0)
-Car.DoorStatus(0@, 3)
 if
     not Actor.InCar($PLAYER_ACTOR, 0@)
-jf @drop_all
+jf @drop_clear_task
+062E: get_actor 1@ task 1482 status_store_to 11@
+//0513: show_text_box_1number 'SLOT_02' number 11@
+if
+    11@ == 7
+jf @entering
 if
     Actor.InCar(1@, 0@)
-jf @entering
-0513: show_text_box_1number 'SLOT_02' number 1337
+jf @drop_all
+//0513: show_text_box_1number 'SLOT_02' number 1337
 0209: 9@ = random_int_in_ranges 1 4
 if
 9@ == 1
@@ -198,11 +202,11 @@ jump @taxi_go
 0947: actor 1@ speak_from_audio_table 222 store_spoken_phrase_id_to 30@
 
 :taxi_go
-Audiostream.Release(8@)
+0209: 3@ = random_int_in_ranges 35000 40000
 if
     not Actor.InCar($PLAYER_ACTOR, 0@)
 jf @bail
-0209: 3@ = random_int_in_ranges 5000 10000
+Car.DoorStatus(0@, 3)
 Car.SetToNormalDriver(0@)
 Car.SetDriverBehaviour(0@, FollowRoad)
 Car.SetMaxSpeed(0@, 30.0)
@@ -227,13 +231,11 @@ jf @drop_both
 if and
     $ACTIVE_INTERIOR == 0
     Player.Defined($PLAYER_CHAR)
+    0104:   actor $PLAYER_ACTOR near_actor 1@ radius 50.0 50.0 25.0 flag 0
 jf @drop_all   
 if
     not actor.Dead(1@)
 jf @drop_all
-if
-    8457: not player $PLAYER_CHAR aiming_at_actor 1@
-jf @drop_clear_task
 2@ = Car.Health(0@)
 if and
     2@ > 250
@@ -243,9 +245,8 @@ if
     Actor.InCar(31@, 0@)
 jf @drop_clear_task
 if
-    0203: actor 1@ near_car 0@ radius 10.0 10.0 flag 0 on_foot
+    0202: actor 1@ near_car 0@ radius 20.0 20.0 flag 0
 jf @drop_clear_task
-0513: show_text_box_1number 'SLOT_02' number 3
 return
 
 :drop_taxi
@@ -255,21 +256,13 @@ jf @find_car
 if
     not 8@ == 0
 jf @drop_ped
-Audiostream.Release(8@)
 jump @drop_ped
 
 :drop_clear_task
-3@ = 0
-if
-    TIMERA > 0
-jf @drop_all
-0513: show_text_box_1number 'SLOT_02' number 130
+3@ = 1000
 0687: clear_actor 1@ task 
 05DE: AS_actor 1@ walk_around_ped_path
-if
-    not 8@ == 0
-jf @drop_all
-Audiostream.Release(8@)
+Car.SetDriverBehaviour(0@, FollowRoad)
 
 :drop_all
 Actor.RemoveReferences(31@)
@@ -278,5 +271,5 @@ Car.RemoveReferences(0@)
 Actor.RemoveReferences(1@)
    
 :exit
-wait 3@
+TIMERA = 0
 jump @find_car    
