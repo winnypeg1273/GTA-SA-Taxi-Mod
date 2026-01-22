@@ -18,29 +18,35 @@ jf @START
 if
     056E:   car 0@ defined
 jf @START
+Car.StorePos(0@, 27@, 28@, 29@)
+if 
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 10.0 10.0 2.0 on_foot
+jf @START_OVER
+if
+    not Car.Wrecked(0@)
+jf @START_OVER
 08EC: 17@ = car 0@ class 
 if 
    17@ == 6
-jf @START  
+jf @START_OVER 
 09B3: get_car 0@ door_status 17@
 if
     17@ < 2
-jf @START
+jf @START_OVER
 01E9: 17@ = car 0@ num_passengers 
 if 
   17@ == 0 
-jf @START
+jf @START_OVER
 046C: 1@ = car 0@ driver
 if
     not 1@ == -1
-jf @START
+jf @START_OVER
 if  
     056D:   actor 1@ defined
-jf @START
-Car.StorePos(0@, 27@, 28@, 29@)
-if 
-    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
-jf @START
+jf @START_OVER
+if
+    not Actor.Dead(1@)
+jf @START_OVER
 0512: show_permanent_text_box 'MYTAXT'  // Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 jump @START_WAIT
 
@@ -52,7 +58,7 @@ jf @START
 Car.StorePos(0@, 27@, 28@, 29@)
 if and
     Player.Defined($PLAYER_CHAR)
-    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 7.0 7.0 2.0 on_foot
+    00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 10.0 10.0 2.0 on_foot
 jf @START_EXIT
 2@ = Car.Health(0@)
 if
@@ -86,6 +92,10 @@ if
     not Player.WantedLevel($PLAYER_CHAR) > 0
 jf @START_WANTED
 jump @ENTERING
+
+:START_OVER
+Car.RemoveReferences(0@)
+jump @START
 
 :START_WANTED
 03E6: remove_text_box
@@ -336,6 +346,8 @@ wait 0
 03AB: set_car 0@ strong 1
 Car.SetDriverBehaviour(0@, 12)
 00AE: set_car 0@ traffic_behaviour_to 5
+TIMERB = 0
+073B: set_car 0@ can_go_against_traffic 0
 Car.SetMaxSpeed(0@, 30.0)
 02CE: 29@ = ground_z_at 27@ 28@ 29@
 
@@ -375,6 +387,11 @@ jump @ON_ROOF
 
 :STUCK_CHECK
 if
+    TIMERB == 10000
+then
+    00AE: set_car 0@ traffic_behaviour_to 0    
+end
+if
     03CE: car 0@ stuck
 jf @HURRY_TAXI
 jump @TRIP_SKIP
@@ -384,6 +401,7 @@ if
     0AB0:   is_key_pressed 16
 jf @DRIVE_CONTROLS
 00AE: set_car 0@ traffic_behaviour_to 2
+073B: set_car 0@ can_go_against_traffic 1
 jump @DRIVE_CHECK
 
 :DRIVE_CONTROLS

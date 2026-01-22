@@ -1,0 +1,179 @@
+{$CLEO .cs}
+
+0000: NOP
+
+:START
+wait 0
+if
+    Player.Defined($PLAYER_CHAR)
+jf @START    
+Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
+0509: 26@ = distance_between_XY 23@ 24@ and_XY 0.0 0.0
+if
+    26@ > 100.0
+jf @START 
+073E: get_car_in_sphere 23@ 24@ 25@ radius 50.0 model #TAXI handle_as 0@
+if
+    056E:   car 0@ defined
+jf @START_1
+jump @START_2
+
+:START_1
+073E: get_car_in_sphere 23@ 24@ 25@ radius 50.0 model #CABBIE handle_as 0@
+if
+    056E:   car 0@ defined
+jf @START
+jump @START_2
+
+:START_2
+Car.StorePos(0@, 27@, 28@, 29@)
+if
+    00FE: actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 45.0 45.0 20.0
+jf @START_OVER
+if
+    00FE: actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 35.0 35.0 20.0
+jf @START_3
+jump @START_OVER
+
+:START_3
+if
+    not Actor.InCar($PLAYER_ACTOR, 0@)
+jf @START_OVER
+8@ = Car.Health(0@)
+if
+    8@ > 990
+jf @START_OVER
+08EC: 22@ = car 0@ class 
+if 
+   22@ == 6
+jf @START_OVER 
+01E9: 22@ = car 0@ num_passengers 
+if 
+  22@ == 0 
+jf @START_OVER
+046C: 1@ = car 0@ driver
+if
+    not 1@ == -1
+jf @START_OVER
+if  
+    056D:   actor 1@ defined
+jf @START_OVER
+if
+    not Actor.Dead(1@)
+jf @START_OVER
+jump @CREATE
+
+:START_OVER
+Car.RemoveReferences(0@)
+if
+    056D:   actor 1@ defined
+jf @START  
+Actor.RemoveReferences(1@)
+jump @START
+
+:CREATE
+0209: 7@ = random_int_in_ranges 0 3
+for 5@ = 0 to 7@
+    0376: 2@(5@,3i) = create_random_actor_at 0.0 0.0 0.0
+    9@ = 2
+    0062: 9@ -= 5@ // int 
+    0430: put_actor 2@(5@,3i) into_car 0@ passenger_seat 9@    
+end
+0208: 10@ = random_float_in_ranges -200.0 200.0
+0407: store_coords_to 17@ 18@ 19@ from_car 0@ with_offset 10@ 200.0 20.0
+02CE: 19@ = ground_z_at 17@ 18@ 19@
+02C0: store_to 17@ 18@ 19@ ped_path_coords_closest_to 17@ 18@ 19@
+Car.SetDriverBehaviour(0@, 1)
+
+:WAIT
+wait 0
+02C1: store_to 14@ 15@ 16@ car_path_coords_closest_to 17@ 18@ 19@
+Car.DriveTo(0@, 14@, 15@, 16@)
+Car.StorePos(0@, 27@, 28@, 29@)
+if
+    00FE: actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 75.0 75.0 20.0
+jf @FINISH
+if and
+    Player.Defined($PLAYER_CHAR)
+    not Actor.InCar($PLAYER_ACTOR, 0@)
+jf @FINISH
+8@ = Car.Health(0@)
+if and
+    8@ > 250
+    Actor.InCar(1@, 0@)
+    not Actor.Dead(1@)
+jf @FINISH
+for 5@ = 0 to 7@
+    if
+        056D:   actor 2@(5@,3i) defined
+    then  
+        if or 
+            not Actor.InCar(2@(5@,3i), 0@)
+            Actor.Dead(2@(5@,3i))
+        then
+            break
+            jump @FINISH
+        end
+    end
+end
+if
+    01AD: car 0@ sphere 0 near_point 14@ 15@ radius 3.0 3.0
+jf @WAIT
+jump @ARRIVE
+
+:ARRIVE
+TIMERA = 0
+Car.Health(0@) = 990
+Car.SetMaxSpeed(0@, 0.0)
+for 5@ = 0 to 7@
+    if
+        056D:   actor 2@(5@,3i) defined
+    then
+        0633: AS_actor 2@(5@,3i) exit_car
+        Actor.RemoveReferences(2@(5@,3i))
+    end
+end
+
+:ARRIVE_WAIT
+wait 0
+Car.StorePos(0@, 27@, 28@, 29@)
+if and
+    not Actor.Dead(1@)
+    Actor.InCar(1@, 0@)
+    not Car.Wrecked(0@)
+jf @FINISH_TRIP
+if and
+    Player.Defined($PLAYER_CHAR)
+    00FE: actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 25.0 25.0 20.0
+jf @FINISH_TRIP 
+if
+    TIMERA < 2500
+jf @FINISH_TRIP
+jump @ARRIVE_WAIT
+
+:FINISH_TRIP
+Car.SetMaxSpeed(0@, 30.0)
+00A8: set_car 0@ to_drive_around
+Car.SetDriverBehaviour(0@, FollowRoad)
+Actor.RemoveReferences(1@)
+Car.RemoveReferences(0@)
+wait 15000
+jump @START
+
+
+:FINISH
+00A8: set_car 0@ to_drive_around
+00AE: set_car 0@ traffic_behaviour_to 2
+Car.Health(0@) = 990
+for 5@ = 0 to 7@
+    if
+        056D:   actor 2@(5@,3i) defined
+    then
+        Actor.RemoveReferences(2@(5@,3i))        
+    end    
+end
+Actor.RemoveReferences(1@)
+Car.RemoveReferences(0@)
+0209: 6@ = random_int_in_ranges 5000 25000
+wait 6@
+jump @START 
