@@ -7,6 +7,8 @@ This is a new &amp; improved taxi ride mod for GTA San Andreas (not entirely min
 * The mod now properly checks if the player actually has enough money to start the trip
 * It also checks if the destination is within an unlocked region or city
 * The taxi only operates within a certain distance
+* Some taxis may already have NPC passengers inside and drive them to a random destination in town
+* Player cannot ride a taxi already with passengers.
 
 ## To do or not to do
 * Add more functionalities / conversations
