@@ -46,7 +46,7 @@ if
 jf @START_OVER
 if
     not Actor.Dead(1@)
-jf @START_OVER
+jf @FINISH
 0512: show_permanent_text_box 'MYTAXT'  // Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 jump @START_WAIT
 
