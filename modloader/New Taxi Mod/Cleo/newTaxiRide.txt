@@ -394,7 +394,7 @@ end
 if
     03CE: car 0@ stuck
 jf @HURRY_TAXI
-jump @TRIP_SKIP
+jump @SKIP
 
 :HURRY_TAXI
 if
@@ -451,6 +451,9 @@ Car.SetMaxSpeed(0@, 0.0)
 jump @INSIDE_CHECK   
 
 :TRIP_SKIP
+30@ *= 2 
+
+:SKIP
 0169: set_fade_color_RGB 0 0 0 
 fade 0 1000 
 wait 1200 
@@ -475,7 +478,6 @@ fade 1 1000
     end 
 31@ *= -1 
 call_function 4461760 1 1 31@
-30@ *= 2 
 jump @ARRIVED
 
 
