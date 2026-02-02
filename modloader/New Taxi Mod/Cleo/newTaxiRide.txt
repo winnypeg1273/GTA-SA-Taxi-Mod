@@ -10,6 +10,12 @@ jf @START
 if
     044B:   actor $PLAYER_ACTOR on_foot
 jf @START
+if
+    0A0C:   player $PLAYER_CHAR on_jetpack
+jf @START_1
+jump @START
+
+:START_1
 store_closest_entities $PLAYER_ACTOR 0@ 1@
 if 
   0@ > 0 
@@ -74,18 +80,20 @@ jf @START_NV
 if 
     04EE:   animation "MISC" loaded
 jf @START_WAIT 
-Actor.StorePos($PLAYER_ACTOR, 23@, 24@, 25@)
-0063: 23@ -= 27@ // (float)
-0063: 24@ -= 28@ // (float)
-0604: get_Z_angle_for_point 23@ 24@ store_to 21@
-21@ += 180.0
-Actor.Angle($PLAYER_ACTOR) = 21@ 
-0605: actor $PLAYER_ACTOR perform_animation "HIKER_POSE_L" IFP "MISC" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+01B9: set_actor $PLAYER_ACTOR armed_weapon_to 0
+0615: define_AS_pack_begin 21@
+//0639: AS_actor -1 rotate_to_actor 1@
+//05BF: AS_actor -1 look_at_actor 1@ 500 ms
+074D: AS_actor -1 turns_to_and_look_at_actor 1@ timelimit 500
+0605: actor -1 perform_animation "HIKER_POSE_L" IFP "MISC" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time 700
+0616: define_AS_pack_end 21@
+0618: assign_actor $PLAYER_ACTOR to_AS_pack 21@
+061B: remove_references_to_AS_pack 21@
 TIMERA = 0 
 jump @ENTER_1
 
 :START_NV
-TIMERA = 1500
+TIMERA = 3500
 
 :ENTER_1 
 if
@@ -102,7 +110,7 @@ jump @START
 020A: set_car 0@ door_status_to 3
 03E5: show_text_box 'WANTED' // We won't help fugitives escape!
 00A8: set_car 0@ to_psycho_driver
-wait 5000
+wait 0
 jump @FINISH
 
 :START_EXIT
@@ -116,7 +124,7 @@ Car.DriveTo(0@, 27@, 28@, 29@)
 09B0: set_car 0@ accessible_for_player_using_controller 1 
 03BF: set_player $PLAYER_CHAR ignored_by_everyone 1
 02A9: set_actor 1@ immune_to_nonplayer 1
-050F: get_max_wanted_level_to 18@
+050F: get_max_wanted_level_to 18@   
 jump @ENTER_CHECK 
 
 :ENTER_CHECK 
@@ -144,7 +152,7 @@ jump @CANCEL_1
 :ENTER_RUN
 wait 0
 if
-    TIMERA >= 1000
+    TIMERA >= 1500
 jf @CANCEL_1 
 05CA: AS_actor $PLAYER_ACTOR enter_car 0@ passenger_seat -1 time 10000
 jump @CANCEL_1   
