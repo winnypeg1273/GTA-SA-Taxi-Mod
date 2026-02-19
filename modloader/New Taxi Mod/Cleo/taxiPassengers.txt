@@ -112,8 +112,8 @@ jump @FINISH_B
 
 :WAIT
 wait 0
-Car.StorePos(0@, 27@, 28@, 29@)
 if and
+    not Car.Wrecked(0@)
     Player.Defined($PLAYER_CHAR)
     $ACTIVE_INTERIOR == 0
     not Actor.InCar($PLAYER_ACTOR, 0@)
@@ -124,6 +124,7 @@ if and
     Actor.InCar(1@, 0@)
     not Actor.Dead(1@)
 jf @FINISH
+Car.StorePos(0@, 27@, 28@, 29@)
 if
     20@ < 3
 jf @DROP_OFF
