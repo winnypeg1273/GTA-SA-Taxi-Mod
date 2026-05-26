@@ -5,31 +5,25 @@
 :START
 wait 0
 if
-    Player.Defined($PLAYER_CHAR)
+    Player.Defined(0)
 jf @START    
-if
+if and
     044B:   actor $PLAYER_ACTOR on_foot
+    8A0C:   not player 0 on_jetpack
 jf @START
-if
-    0A0C:   player $PLAYER_CHAR on_jetpack
-jf @START_1
-jump @START
 
-:START_1
+:FIND_TAXI
 store_closest_entities $PLAYER_ACTOR 0@ 1@
 if 
   0@ > 0 
 jf @START
 1@ = 0
 if
-    056E:   car 0@ defined
+    not Car.Wrecked(0@)
 jf @START
 Car.StorePos(0@, 27@, 28@, 29@)
 if 
     00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 10.0 10.0 2.0 on_foot
-jf @START_OVER
-if
-    not Car.Wrecked(0@)
 jf @START_OVER
 08EC: 17@ = car 0@ class 
 if 
@@ -45,25 +39,19 @@ if
 jf @START_OVER
 046C: 1@ = car 0@ driver
 if
-    not 1@ == -1
-jf @START_OVER
-if  
-    056D:   actor 1@ defined
-jf @START_OVER
-if
     not Actor.Dead(1@)
 jf @FINISH
 0512: show_permanent_text_box 'MYTAXT'  // Press ~k~~PED_ANSWER_PHONE~ to enter Cab as a Passenger.
 jump @START_WAIT
 
 :START_WAIT 
-wait 0
+wait 0  
 if
     056E:   car 0@ defined
 jf @START
 Car.StorePos(0@, 27@, 28@, 29@)
 if and
-    Player.Defined($PLAYER_CHAR)
+    Player.Defined(0)
     00FF:  actor $PLAYER_ACTOR sphere 0 in_sphere 27@ 28@ 29@ radius 10.0 10.0 2.0 on_foot
 jf @START_EXIT
 2@ = Car.Health(0@)
@@ -75,7 +63,7 @@ if
 jf @START_WAIT 
 if
     09ED:   actor 1@ is_within_field_of_view_actor $PLAYER_ACTOR
-jf @START_NV
+jf @START_NV  
 04ED: load_animation "MISC" 
 if 
     04EE:   animation "MISC" loaded
@@ -92,12 +80,12 @@ jf @START_WAIT
 TIMERA = 0 
 jump @ENTER_1
 
-:START_NV
+:START_NV    // Not in View
 TIMERA = 3500
 
 :ENTER_1 
 if
-    not Player.WantedLevel($PLAYER_CHAR) > 0
+    not Player.WantedLevel(0) > 0
 jf @START_WANTED
 jump @ENTERING
 
@@ -122,14 +110,15 @@ jump @FINISH
 Car.StorePos(0@, 27@, 28@, 29@)
 Car.DriveTo(0@, 27@, 28@, 29@)
 09B0: set_car 0@ accessible_for_player_using_controller 1 
-03BF: set_player $PLAYER_CHAR ignored_by_everyone 1
+03BF: set_player 0 ignored_by_everyone 1
 02A9: set_actor 1@ immune_to_nonplayer 1
-050F: get_max_wanted_level_to 18@   
+050F: get_max_wanted_level_to 18@ 
+01F0: set_max_wanted_level_to 0  
 jump @ENTER_CHECK 
 
 :ENTER_CHECK 
-wait 0          
-01F0: set_max_wanted_level_to 0
+wait 0     
+//0AD0: show_formatted_text_lowpriority "Entering" time 2000   
 if
     not Car.Wrecked(0@)
 jf @EXIT_2
@@ -137,8 +126,10 @@ jf @EXIT_2
 if
     2@ > 250
 jf @EXIT_2
-if and
+if
     not Actor.Dead(1@)
+jf @EXIT_2
+if
     Actor.InCar(1@, 0@)
 jf @EXIT_2
 if
@@ -189,11 +180,12 @@ stream_custom_script "TAXICAMERA.S"
 :INSIDE_CHECK
 wait 0
 if
-    Player.Defined($PLAYER_ACTOR)
+    Player.Defined(0)
 jf @EXIT_3
 if
     not Actor.Dead(1@)
 jf @NO_DRIVER
+if
     Actor.InCar(1@, 0@)
 jf @NO_DRIVER
 2@ = Car.Health(0@)
@@ -230,7 +222,7 @@ Car.StorePos(0@, 23@, 24@, 25@)
 jump @END
 
 :EXIT_3
-03E6: remove_text_box         
+03E6: remove_text_box      
 if
     not Car.Wrecked(0@)
 jf @END
@@ -272,7 +264,7 @@ jf @MONEY_CHECK_2
 :MONEY_CHECK_2 
 01E4: show_text_1number_lowpriority GXT 'NFARE' number 30@ time 2000 flag 1  // Next Ride - Cab Fare $~1~
 if 
-   Player.Money($PLAYER_CHAR) > 30@
+   Player.Money(0) > 30@
 jf @NO_MONEY
 
 :TOWN_CHECK
@@ -372,7 +364,7 @@ Car.SetMaxSpeed(0@, 30.0)
 :DRIVE_CHECK
 wait 0
 if
-    Player.Defined($PLAYER_CHAR)
+    Player.Defined(0)
 jf @EXIT_DRIVE
 if
     not Actor.Dead(1@)
@@ -509,11 +501,11 @@ Car.SetMaxSpeed(0@, 0.0)
 05CD: AS_actor $PLAYER_ACTOR exit_car 0@
 20@ = 0 // Trip Ended Flag
 if
-    Player.Money($PLAYER_CHAR) > 30@
+    Player.Money(0) > 30@
 jf @UNAFFORD
 01E4: show_text_1number_lowpriority GXT 'FARED' number 30@ time 2000 flag 1  // Cab Fare $~1~
 30@ *= -1
-Player.Money($PLAYER_CHAR) += 30@
+Player.Money(0) += 30@
 jump @ARRIVED_WAIT
 
 :UNAFFORD
@@ -530,7 +522,7 @@ if and
     not Actor.Dead(1@)
 jf @END   
 if and
-    Player.Defined($PLAYER_ACTOR)
+    Player.Defined(0)
     not Actor.InCar($PLAYER_ACTOR, 0@)
 jf @ARRIVED_WAIT    
 gosub @CAR_AWAY
@@ -550,7 +542,7 @@ return
 
 :END
 Camera.Restore_WithJumpCut
-03BF: set_player $PLAYER_CHAR ignored_by_everyone 0
+03BF: set_player 0 ignored_by_everyone 0
 01F0: set_max_wanted_level_to 18@
 if
     not Car.Wrecked(0@)
@@ -560,10 +552,15 @@ jf @FINISH
 if
     20@ == 2
 jf @FINISH
-Player.SetMinWantedLevel($PLAYER_CHAR, 1)
+Player.SetMinWantedLevel(0, 1)
 
 :FINISH
-//03E5: show_text_box 'TAXI_3'
+//03E5: show_text_box 'TAXI_3' 
+if 
+    Actor.InCar($PLAYER_ACTOR, 0@)
+then
+    0633: AS_actor $PLAYER_ACTOR exit_car
+end
 if 056E:   car 0@ defined
 then Car.RemoveReferences(0@)
 end
