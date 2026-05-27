@@ -1,6 +1,11 @@
 # GTA SA Taxi Mod
 This is a new &amp; improved taxi ride mod for GTA San Andreas (not entirely mine)
 
+## Installation
+* Install CLEO & Modloader
+* The current version also requires CLEO+. If you don't have it, download V3.3.8
+* Extract the downloaded folder into your Modloader folder
+
 ## New features of this mod
 * Fixes all the bugs in legacy
 * Handles various trip interruption cases such as: car damaged or stuck, taxi driver got out
